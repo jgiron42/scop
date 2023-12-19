@@ -5,7 +5,7 @@
 #include "WorldToView.hpp"
 #include <algorithm>
 
-Scene::Scene() : projection(Perspective(2, 5)), inputManager(this->window, *this){
+Scene::Scene() : window(NULL), projection(Perspective(1, 4)), inputManager(this->window, *this) {
 	glfwInit();
 	this->createWindow(800, 800, "scop");
 
@@ -26,8 +26,8 @@ Scene::Scene() : projection(Perspective(2, 5)), inputManager(this->window, *this
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 
-	this->view.setPos(Vector<float>{0, 0, -3});
-	this->projection.setFov(M_PI / 3);
+	this->view.setPos(Vector<float>{0, 0, -2.5});
+	this->projection.setFov(87. * M_PI / 180 );
 }
 
 Scene::~Scene() {
@@ -53,10 +53,8 @@ void	Scene::removeObject(const object_id id)
 void Scene::loop() {
 	static double xpos, ypos;
 	glfwGetCursorPos(window, &xpos, &ypos);
-	std::cout << xpos << ", " << ypos << std::endl;
 	while(!glfwWindowShouldClose(this->window))
 	{
-		this->processInput();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		for (Object &o : this->objs)
 			o.draw(this->projection * this->view);
@@ -64,48 +62,30 @@ void Scene::loop() {
 		glfwSwapBuffers(this->window);
 
 		this->inputManager.poll();
+		this->processInput();
 	}
+}
+
+size_t Scene::get_win_height() const {
+	return this->win_height;
+}
+
+size_t Scene::get_win_width() const {
+	return this->win_width;
+}
+
+GLFWwindow *Scene::get_window() const {
+	return this->window;
 }
 
 void Scene::processInput() {
 	glfwGetWindowSize(this->window, &this->win_width, &this->win_height);
 	this->projection.setAspectRatio((float)this->win_height / (float)this->win_width);
-
-	static double new_pos[2];
-	glfwGetCursorPos(window, &new_pos[0], &new_pos[1]);
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-	{
-		if ((new_pos[0] - this->pos[0] != 0 || new_pos[1] - this->pos[1] != 0))
-			this->rotateView(new_pos[0] - this->pos[0], new_pos[1] - this->pos[1]);
-		speed[0] = new_pos[0] - this->pos[0];
-		speed[1] = new_pos[1] - this->pos[1];
-	}
-	else
-	{
-		speed[0] /= 1.02;
-		speed[1] /= 1.02;
-		this->rotateView(speed[0], speed[1]);
-	}
-	if ((new_pos[0] - this->pos[0] != 0 || new_pos[1] - this->pos[1] != 0)
-		&& glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
-		this->translateView(new_pos[0] - this->pos[0], new_pos[1] - this->pos[1]);
-	this->pos[0] = new_pos[0];
-	this->pos[1] = new_pos[1];
-}
-
-void Scene::rotateView(double xpos, double ypos) {
-	xpos /= -(double)this->win_width / 2;
-	ypos /= -(double)this->win_height / 2;
-	this->objs[0].rotate(atan((float)ypos), atan((float)xpos), 0);
-}
-
-void Scene::translateView(double xpos, double ypos) {
-	xpos /= (double)this->win_height / 2; // TODO: better
-	ypos /= -(double)this->win_height / 2;
-	this->objs[0].translate(Vector<float>({(float)xpos, (float)ypos, 0.}));
 }
 
 void Scene::createWindow(int width, int height, const std::string &name, GLFWmonitor *monitor, GLFWwindow *share) {
+	assert(!this->window);
+	std::cout << "bonjour" << std::endl;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);

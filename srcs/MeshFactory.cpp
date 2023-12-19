@@ -49,4 +49,12 @@ MeshFactory::MeshFactory(const MeshData &data) : ObjectFactory("srcs/shaders/mes
 
 }
 
-void MeshFactory::build() {}
+MeshFactory::~MeshFactory() {
+	glDeleteVertexArrays(1, &this->VAO);
+	glDeleteBuffers(1, &this->VBO);
+	glDeleteBuffers(1, &this->EBO);
+}
+
+void MeshFactory::build() {
+
+}

@@ -7,6 +7,7 @@
 
 # include "Matrix.hpp"
 # include <array>
+#include <GL/glew.h>
 
 class BasicTransformation;
 class Transformation {
@@ -16,7 +17,7 @@ public:
 	virtual Matrix<float> 	compute() const;
 	friend BasicTransformation operator*(const Transformation &l, const Transformation &r);
 	Transformation();
-	const float *getBuf(void);
+	const GLfloat *getBuf(void);
 	operator const float*();
 };
 

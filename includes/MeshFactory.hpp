@@ -11,7 +11,8 @@ class MeshFactory : public ObjectFactory
 {
 	void build();
 	public:
-	MeshFactory(MeshData const &);
+	explicit MeshFactory(MeshData const &);
+	~MeshFactory();
 };
 
 

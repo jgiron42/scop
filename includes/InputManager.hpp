@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 //#include "Scene.hpp"
 #include <map>
+#include <list>
 #include <vector>
 #include <functional>
 
@@ -17,6 +18,7 @@ public:
 		double t;
 		friend coord operator-(const coord &l, const coord &r);
 	};
+	typedef std::list<std::function<void()> >::iterator tick_event_id;
 private:
 //	typedef void (*clickCallback)(int, coord a, coord b);
 	typedef std::function<void(int, coord, coord)> clickCallback;
@@ -28,11 +30,12 @@ private:
 		coord	begin;
 	};
 	std::map<int, clickListener>		click_listeners;
-	std::vector<std::function<void()> >	tick_listeners;
+	std::list<std::function<void()> >	tick_listeners;
 public:
 	InputManager(GLFWwindow *&w, Scene &s);
 	void	onClick(int key, clickCallback && cb);
-	void	onTick(std::function<void()> &&);
+	tick_event_id	onTick(std::function<void()> &&);
+	void	cancelTickEvent(tick_event_id id);
 	void	watchClicks();
 	void	watchTicks();
 	void	poll();

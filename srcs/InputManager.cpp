@@ -7,8 +7,12 @@ void InputManager::onClick(int key, clickCallback && cb) {
 	this->click_listeners[key].callbacks.push_back(cb);
 }
 
-void InputManager::onTick(std::function<void()> &&cb) {
-	this->tick_listeners.push_back(cb);
+InputManager::tick_event_id InputManager::onTick(std::function<void()> &&cb) {
+	return this->tick_listeners.insert(this->tick_listeners.end(), cb);
+}
+
+void InputManager::cancelTickEvent(InputManager::tick_event_id id) {
+	this->tick_listeners.erase(id);
 }
 
 void InputManager::poll() {

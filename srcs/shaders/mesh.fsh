@@ -9,6 +9,8 @@ in vec3 color;
 
 void main()
 {
-    FragColor = (textureSwitch * texture(uTex, TexCoord).rgb + (1. - textureSwitch) * color / 255) * luminance;
-//    FragColor = texture(uTex, TexCoord).rgb;
+	if (textureSwitch >= 0)
+		FragColor = (textureSwitch * texture(uTex, TexCoord).rgb + (1. - textureSwitch) * color / 255) * luminance;
+	else
+		FragColor = (-textureSwitch * vec3(1,1,1) + (1. + textureSwitch) * color / 255) * luminance;
 }

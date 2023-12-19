@@ -33,7 +33,8 @@ void Bitmap::parse_header() {
 void Bitmap::parse_data() {
 	this->stream.seekg(this->file_header.begin_offset);
 	this->_data.resize(this->file_header.size);
-	this->stream.read(this->_data.data(), this->dib_header.width * this->dib_header.height * this->dib_header.bpp);
+//	this->stream.read(this->_data.data(), this->dib_header.width * this->dib_header.height * this->dib_header.bpp);
+	this->stream.read(this->_data.data(), this->file_header.size);
 }
 
 uint32_t Bitmap::size() const {return this->file_header.size;}

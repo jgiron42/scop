@@ -9,13 +9,13 @@
 
 MeshData::MeshData(const std::string &filename) {
 	this->parse_obj(filename);
-	std::cout << "number of vertices: " << this->raw_vertices.size() << std::endl;
+//	std::cout << "number of vertices: " << this->raw_vertices.size() << std::endl;
 	this->compute_colors();
 	this->compute_normals();
 	this->compute_polygons();
 	this->raw_vertices.clear();
 	this->raw_faces.clear();
-	this->normals.clear();
+//	this->normals.clear();
 	this->vertices_index_map.clear();
 	this->compute_triangles();
 	this->polygons.clear();
@@ -35,13 +35,13 @@ void MeshData::parse_obj(const std::string &filename) {
 	static std::regex f (R"(f(( +([0-9]+)((/([0-9]*))(/([0-9]+))?)?){3,}))", std::regex_constants::extended);
 	static std::regex o (R"(o +[[:print:]]+)", std::regex_constants::extended);
 	static std::regex mtllib(R"(mtllib +([[:print:]]+.mtl))", std::regex_constants::extended);
-	static std::regex usemtl(R"(usemtl +([a-zA-Z]+))", std::regex_constants::extended);
+	static std::regex usemtl(R"(usemtl +([a-zA-Z_0-9]+))", std::regex_constants::extended);
 	static std::regex smooth(R"(s +((1|0)|(on|off)))", std::regex_constants::extended);
 	static std::regex comment("^#.*", std::regex_constants::extended);
 	static std::regex empty_line("^[[:space:]]*$", std::regex_constants::extended);
 
-	material *current_material = nullptr;
-	bool	smooth_value = false;
+	material	*current_material = nullptr;
+	bool		smooth_value = false;
 	while (!stream.eof())
 	{
 		std::string line;
@@ -90,7 +90,7 @@ void MeshData::parse_mtl(const std::string &filename) {
 	if (!stream.is_open())
 		throw std::runtime_error("Can't open " + filename);
 
-	static std::regex newmtl(R"(newmtl +([a-zA-Z]+))", std::regex_constants::extended);
+	static std::regex newmtl(R"(newmtl +([a-zA-Z_0-9]+))", std::regex_constants::extended);
 	static std::regex Ka(R"(Ka +(0(\.[0-9]*)|1(\.0*)?) +(0(\.[0-9]*)|1(\.0*)?) +(0(\.[0-9]*)|1(\.0*)?))", std::regex_constants::extended);
 	static std::regex Kd(R"(Kd +(0(\.[0-9]*)|1(\.0*)?) +(0(\.[0-9]*)|1(\.0*)?) +(0(\.[0-9]*)|1(\.0*)?))", std::regex_constants::extended);
 	static std::regex Ks(R"(Ks +(0(\.[0-9]*)|1(\.0*)?) +(0(\.[0-9]*)|1(\.0*)?) +(0(\.[0-9]*)|1(\.0*)?))", std::regex_constants::extended);
@@ -157,7 +157,7 @@ std::vector<MeshData::raw_face_entry> MeshData::parse_raw_faces(const std::strin
 
 	for (auto it = std::sregex_iterator(s.begin(), s.end(), entry_regex); it != std::sregex_iterator(); it++)
 	{
-		raw_face_entry entry;
+		raw_face_entry entry = {};
 		entry.vertex_index = std::stoi((*it)[1]);
 		entry.texture_index = ((*it)[3].matched) ? std::stoi((*it)[3]) : 0;
 		entry.normal_index = ((*it)[5].matched) ? std::stoi((*it)[5]) : 0;
@@ -167,7 +167,7 @@ std::vector<MeshData::raw_face_entry> MeshData::parse_raw_faces(const std::strin
 }
 
 void MeshData::compute_polygons() {
-	this->normals.resize(1);
+	this->polygons.resize(1);
 	for (auto &rf : this->raw_faces)
 	{
 		std::vector<size_t> current;
@@ -178,9 +178,22 @@ void MeshData::compute_polygons() {
 	}
 	this->polygons.shrink_to_fit();
 }
+#include <functional>
+namespace std {
+	template<>
+	struct hash<MeshData::coords> {
+		size_t operator()(const MeshData::coords &c) const {
+			return std::hash<float>()(c.x) ^ std::hash<float>()(c.y) ^ std::hash<float>()(c.z);
+		}
+	};
+}
+
+bool operator==(const MeshData::coords &l, const MeshData::coords &r) {
+	return l.x == r.x && l.y == r.y && l.z == r.z;
+}
 
 void MeshData::compute_normals() {
-	std::map<coords, size_t> m;
+	std::unordered_map<coords, size_t> m;
 
 	for (auto &rf : this->raw_faces)
 		for (size_t i = 0; i < rf.vertices.size(); i++)
@@ -197,12 +210,19 @@ void MeshData::compute_normals() {
 			vc -= vb;
 			auto vn = cross_product(vc, va);
 			vn = vn / vn.norm();
+//			coords &res = *(new coords());
 			coords res = {vn.data[0], vn.data[1], vn.data[2]};
+//			coords res = {static_cast<float>(rand()), static_cast<float>(rand()), static_cast<float>(rand())};
 			auto it = m.find(res);
 			if (it == m.end())
 			{
 				this->normals.push_back(res);
-				it = m.insert(std::make_pair(res, this->normals.size())).first;
+//				auto new_element = std::pair(res, this->normals.size());
+				auto tmp = m.insert(std::make_pair(res, this->normals.size()));
+				if (tmp.second)
+					it = tmp.first;
+				else
+					throw std::exception();
 			}
 			rf.vertices[i].normal_index = it->second;
 		}
@@ -258,6 +278,7 @@ size_t MeshData::get_vertex_id(MeshData::raw_face_entry entry) {
 void MeshData::center() {
 	coords max = {-INFINITY, -INFINITY, -INFINITY};
 	coords min = {INFINITY, INFINITY, INFINITY};
+	double max_dist = -INFINITY;
 	for (const auto &v : this->vertices)
 	{
 		if (v.pos.x < min.x)
@@ -284,22 +305,30 @@ void MeshData::center() {
 		v.pos.x -= average.x;
 		v.pos.y -= average.y;
 		v.pos.z -= average.z;
+		double dist = v.pos.x * v.pos.x + v.pos.y * v.pos.y + v.pos.z * v.pos.z;
+		if (dist > max_dist)
+			max_dist = dist;
+	}
+	double cap = abs(max_dist);
+	cap = sqrt(cap);
+	for (auto &v : this->vertices) {
+		v.pos.x /= cap;
+		v.pos.y /= cap;
+		v.pos.z /= cap;
 	}
 }
 
 bool MeshData::s_raw_face_entry::operator<(const MeshData::s_raw_face_entry &o) const {
 	return (
-			this->vertex_index < o.vertex_index ||
-			this->normal_index < o.normal_index ||
-			this->color_index < o.color_index ||
-			this->texture_index < o.texture_index
+			this->vertex_index < o.vertex_index || (this->vertex_index <= o.vertex_index &&
+			(this->normal_index < o.normal_index || (this->normal_index <= o.normal_index &&
+			(this->color_index < o.color_index || (this->color_index <= o.color_index &&
+			this->texture_index < o.texture_index)))))
 			);
 }
 
-bool MeshData::coords::operator<(const MeshData::coords &o) const {
+bool operator<(const MeshData::coords &l, const MeshData::coords &r) {
 	return (
-			this->x < o.x ||
-			this->y < o.y ||
-			this->z < o.z
+			l.x < r.x || (l.x >= r.x && (l.y < r.y || (l.y >= r.y && l.z < r.z)))
 			);
 }

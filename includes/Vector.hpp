@@ -9,9 +9,9 @@
 #include "Matrix.hpp"
 #include "math.h"
 #include "complex"
+#include "common.hpp"
 using namespace std;
 
-class incompatible_exception;
 
 template <typename T>
 class Matrix;
@@ -71,7 +71,7 @@ public:
 		if (other.size() != 3 || this->size() != 3) throw incompatible_exception();
 		this->assign({this->data[1] * other.data[2] - this->data[2] * other.data[1],
 					  this->data[2] * other.data[0] - this->data[0] * other.data[2],
-					  this->data[0] * other.data[1] - this->data[1] * other.data[0],});
+					  this->data[0] * other.data[1] - this->data[1] * other.data[0]});
 		return *this;
 	}
 
@@ -107,7 +107,7 @@ public:
 	Vector &operator-=(Vector const &other) {return *this = *this - other;}
 	[[nodiscard]] T		norm() const
 	{
-		T tmp;
+		T tmp = T();
 		for (T val : this->data)
 			tmp += val * val;
 		return sqrt(tmp);
@@ -145,25 +145,31 @@ bool operator!=(Vector<T> const &l, Vector<T> const &r)
 template<typename T = float>
 Vector<T> operator+(Vector<T> const &l, Vector<T> const &r)
 {
-	return Vector<>(l).add(r);
+	return Vector<T>(l).add(r);
 }
 
 template<typename T = float>
 Vector<T> operator-(Vector<T> const &l, Vector<T> const &r)
 {
-	return Vector<>(l).sub(r);
+	return Vector<T>(l).sub(r);
 }
 
 template<typename T = float>
 Vector<T> operator*(Vector<T> const &l, T const &r)
 {
-	return Vector<>(l).scl(r);
+	return Vector<T>(l).scl(r);
+}
+
+template<typename T = float>
+Vector<T> operator*(T const &l, Vector<T> const &r)
+{
+	return Vector<T>(l).scl(r);
 }
 
 template<typename T = float>
 Vector<T> operator/(Vector<T> const &l, T const &r)
 {
-	return Vector<>(l).scl(1/r);
+	return Vector<T>(l).scl(T(1)/r);
 }
 
 template <typename T = float>
@@ -174,7 +180,7 @@ ostream &operator<<(ostream &out, const Vector<T> &v)
 }
 
 template <typename T = float>
-float	angle_cos(Vector<T> const &l, Vector<T> const &r)
+T	angle_cos(Vector<T> const &l, Vector<T> const &r)
 {
 	return Vector<T>(l / l.norm()).dot(r / r.norm());
 }

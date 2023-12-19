@@ -9,7 +9,7 @@ Matrix<float> Transformation::compute() const {
 	return identity_mat(4);
 }
 
-const float *Transformation::getBuf() {
+const GLfloat *Transformation::getBuf() {
 	Matrix<float> mat = this->compute();
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)

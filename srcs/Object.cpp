@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "BasicTransformation.hpp"
 
-Object::Object(const ObjectFactory &f) : factory(f), texture_switch(0) {}
+Object::Object(const ObjectFactory &f) : factory(f), texture_switch(1.) {}
 
 void Object::draw(const Transformation& t) {
 	glBindVertexArray(this->factory.VAO);
@@ -12,9 +12,13 @@ void Object::draw(const Transformation& t) {
 		glBindTexture(GL_TEXTURE_2D, this->factory.tex);
 
 	Vector<float> v{0.5, 0.5, 0.5, 1};
+
 	auto tmp = ((t * this->position).compute().transpose() * v);
-	glUniform1f(this->factory.projection.get_uniform_location("textureSwitch"), this->texture_switch);
-	glUniformMatrix4fv(this->factory.projection.get_uniform_location("projection"), 1, true, t * this->position);
+
+	glUniform1f(this->factory.projection.get_uniform_location("textureSwitch"), this->factory.tex ? this->texture_switch : -this->texture_switch);
+	glUniformMatrix4fv(this->factory.projection.get_uniform_location("projection"), 1, true,
+					   t
+					   	 * this->position);
 	this->factory.projection.use();
 	glDrawElements(GL_TRIANGLES, this->factory.EBO_size, GL_UNSIGNED_INT, 0);
 

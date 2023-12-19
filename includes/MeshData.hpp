@@ -15,8 +15,9 @@ public:
 		float x;
 		float y;
 		float z;
-		bool operator<(const coords &o)  const;
+		friend bool operator<(const coords &l, const coords &r);
 	}			coords;
+//	typedef std::tuple<float, float, float> coords;
 	struct texture_coords {
 		float u;
 		float v;
@@ -40,7 +41,7 @@ public:
 	};
 	typedef struct	s_raw_face_entry{
 		int		vertex_index;
-		size_t	normal_index;
+		ssize_t	normal_index;
 		int		texture_index;
 		int		color_index; // this make no sense in the obj format context but is necessary for the subject
 		bool operator<(const s_raw_face_entry &o)  const;

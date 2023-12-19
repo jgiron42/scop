@@ -1,6 +1,6 @@
 #include "ObjectFactory.hpp"
 
-ObjectFactory::ObjectFactory(std::string const &vs, std::string const &fs) : projection(vs, fs) {
+ObjectFactory::ObjectFactory(std::string const &vs, std::string const &fs) : projection(vs, fs), tex(0) {
 }
 
 Object ObjectFactory::create() {

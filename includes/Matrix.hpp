@@ -59,7 +59,7 @@ public:
 		this->data.resize(init.size());
 		for (auto &v : this->data)
 		{
-			v = it->_data;
+			v = it->data;
 			it++;
 		}
 		this->resize(init.size(), init.begin()->size());

@@ -20,9 +20,8 @@ private:
 	InputManager							inputManager;
 	int 									win_height;
 	int 									win_width;
-	double									pos[2];
-	double									speed[2];
-	bool									click;
+//	double									pos[2];
+//	double									speed[2];
 public:
 	typedef boost::container::stable_vector<Object>::difference_type object_id;
 
@@ -31,6 +30,10 @@ public:
 	void loop();
 	void processInput();
 	InputManager &getInputManager();
+
+	size_t		get_win_width() const;
+	size_t		get_win_height() const;
+	GLFWwindow	*get_window() const;
 
 	object_id	addObject(const Object &);
 	Object	&getObject(object_id id);
